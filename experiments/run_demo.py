@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 from adapters.mixed_stream_generator import MixedStreamGenerator
 from adapters.telemetry_adapter import TelemetryAdapter
@@ -8,7 +9,15 @@ from core.deduplication import DeduplicationController, TelemetryAggregator
 from core.importance import ImportanceScorer
 from core.metrics import calculate_metrics
 from core.packet import CombatPacket, PacketType
+from core.reporting import build_report, save_csv_report, save_json_report
 from core.scheduler import PriorityScheduler
+
+
+SCENARIOS = {
+    "normal": {"count": 100, "bandwidth": 2600, "loss": 0.00},
+    "overload": {"count": 150, "bandwidth": 1600, "loss": 0.02},
+    "emergency": {"count": 200, "bandwidth": 1100, "loss": 0.08},
+}
 
 
 def prepare_packets(packets: list[CombatPacket]) -> list[CombatPacket]:
@@ -76,36 +85,65 @@ def print_report(title: str, total_packets: list[CombatPacket], report: ChannelR
     print(f"Потеряно случайно:               {len(report.dropped_by_loss)}")
 
 
+def resolve_scenario(args: argparse.Namespace) -> tuple[str, int, int, float]:
+    scenario = SCENARIOS[args.scenario]
+    count = args.count if args.count is not None else scenario["count"]
+    bandwidth = args.bandwidth if args.bandwidth is not None else scenario["bandwidth"]
+    loss = args.loss if args.loss is not None else scenario["loss"]
+    return args.scenario, count, bandwidth, loss
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Демонстрация MVP Адаптив-Боец")
-    parser.add_argument("--count", type=int, default=100, help="число входных сообщений")
-    parser.add_argument("--bandwidth", type=int, default=1800, help="полоса канала за цикл, байт")
-    parser.add_argument("--loss", type=float, default=0.0, help="вероятность случайной потери 0..1")
+    parser.add_argument("--scenario", choices=SCENARIOS.keys(), default="overload", help="готовый профиль канала")
+    parser.add_argument("--count", type=int, default=None, help="число входных сообщений")
+    parser.add_argument("--bandwidth", type=int, default=None, help="полоса канала за цикл, байт")
+    parser.add_argument("--loss", type=float, default=None, help="вероятность случайной потери 0..1")
     parser.add_argument("--seed", type=int, default=42, help="seed для воспроизводимости")
+    parser.add_argument("--export-dir", type=Path, default=None, help="папка для JSON/CSV отчёта")
     args = parser.parse_args()
 
+    scenario_name, count, bandwidth, loss = resolve_scenario(args)
+
     generator = MixedStreamGenerator(seed=args.seed)
-    packets = generator.generate(count=args.count)
+    packets = generator.generate(count=count)
     prepared_packets = prepare_packets(packets)
 
     baseline_report = run_baseline(
         prepared_packets,
-        bandwidth_bytes=args.bandwidth,
-        loss_probability=args.loss,
+        bandwidth_bytes=bandwidth,
+        loss_probability=loss,
         seed=args.seed,
     )
     adaptive_report = run_adaptive(
         prepared_packets,
-        bandwidth_bytes=args.bandwidth,
-        loss_probability=args.loss,
+        bandwidth_bytes=bandwidth,
+        loss_probability=loss,
         seed=args.seed,
     )
 
     print("АДАПТИВ-БОЕЦ: демонстрация адаптивного управления информационным потоком")
-    print(f"Параметры: count={args.count}, bandwidth={args.bandwidth}, loss={args.loss}, seed={args.seed}")
+    print(f"Параметры: scenario={scenario_name}, count={count}, bandwidth={bandwidth}, loss={loss}, seed={args.seed}")
 
     print_report("Базовая отправка без адаптации", prepared_packets, baseline_report)
     print_report("Адаптивная отправка", prepared_packets, adaptive_report)
+
+    report = build_report(
+        scenario_name=scenario_name,
+        total_packets=prepared_packets,
+        baseline_report=baseline_report,
+        adaptive_report=adaptive_report,
+        parameters={"count": count, "bandwidth": bandwidth, "loss": loss, "seed": args.seed},
+    )
+
+    if args.export_dir is not None:
+        json_path = args.export_dir / f"{scenario_name}_report.json"
+        csv_path = args.export_dir / f"{scenario_name}_report.csv"
+        save_json_report(report, json_path)
+        save_csv_report(report, csv_path)
+        print(f"\nОтчёты сохранены:")
+        print(f"- {json_path}")
+        print(f"- {csv_path}")
 
 
 if __name__ == "__main__":
