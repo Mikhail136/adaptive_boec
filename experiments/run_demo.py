@@ -14,7 +14,7 @@ from core.deduplication import DeduplicationController, TelemetryAggregator
 from core.importance import ImportanceScorer
 from core.metrics import calculate_metrics
 from core.packet import CombatPacket, PacketType
-from core.reporting import build_report, save_csv_report, save_json_report
+from core.reporting import build_report, save_csv_report, save_html_report, save_json_report
 from core.scheduler import PriorityScheduler
 
 
@@ -105,7 +105,7 @@ def main() -> None:
     parser.add_argument("--bandwidth", type=int, default=None, help="полоса канала за цикл, байт")
     parser.add_argument("--loss", type=float, default=None, help="вероятность случайной потери 0..1")
     parser.add_argument("--seed", type=int, default=42, help="seed для воспроизводимости")
-    parser.add_argument("--export-dir", type=Path, default=None, help="папка для JSON/CSV отчёта")
+    parser.add_argument("--export-dir", type=Path, default=None, help="папка для JSON/CSV/HTML отчёта")
     args = parser.parse_args()
 
     scenario_name, count, bandwidth, loss = resolve_scenario(args)
@@ -144,11 +144,14 @@ def main() -> None:
     if args.export_dir is not None:
         json_path = args.export_dir / f"{scenario_name}_report.json"
         csv_path = args.export_dir / f"{scenario_name}_report.csv"
+        html_path = args.export_dir / f"{scenario_name}_report.html"
         save_json_report(report, json_path)
         save_csv_report(report, csv_path)
+        save_html_report(report, html_path)
         print(f"\nОтчёты сохранены:")
         print(f"- {json_path}")
         print(f"- {csv_path}")
+        print(f"- {html_path}")
 
 
 if __name__ == "__main__":
