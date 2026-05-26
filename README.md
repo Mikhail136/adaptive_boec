@@ -29,7 +29,7 @@
 6. отправить более важные сообщения первыми;
 7. сравнить результат с базовой отправкой.
 
-## Что уже реализовано
+## Что реализовано
 
 - `core/packet.py` — модель пакета и типы сообщений.
 - `core/importance.py` — оценка важности сообщений.
@@ -37,11 +37,14 @@
 - `core/deduplication.py` — дедупликация и агрегация телеметрии.
 - `core/scheduler.py` — приоритетный планировщик.
 - `core/metrics.py` — метрики доставки, критических сообщений и сжатия.
+- `core/reporting.py` — экспорт отчётов в JSON и CSV.
 - `channel/emulator.py` — эмулятор ограниченного канала с отчётом о потерях.
 - `adapters/mixed_stream_generator.py` — генератор смешанного потока.
 - `adapters/telemetry_adapter.py` — бинарная упаковка координат и телеметрии.
 - `experiments/run_demo.py` — основной демонстрационный сценарий.
 - `tests/test_core_pipeline.py` — базовые автотесты MVP.
+- `.github/workflows/tests.yml` — CI-проверка через GitHub Actions.
+- `DEMO_GUIDE.md` — сценарий показа проекта.
 
 ## Быстрый запуск
 
@@ -49,18 +52,41 @@
 python experiments/run_demo.py
 ```
 
-Пример с настройками:
+Готовые сценарии:
 
 ```bash
-python experiments/run_demo.py --count 100 --bandwidth 1800 --loss 0.05 --seed 42
+python experiments/run_demo.py --scenario normal
+python experiments/run_demo.py --scenario overload
+python experiments/run_demo.py --scenario emergency
+```
+
+Экспорт отчёта:
+
+```bash
+python experiments/run_demo.py --scenario emergency --export-dir reports
+```
+
+После этого появятся:
+
+```text
+reports/emergency_report.json
+reports/emergency_report.csv
+```
+
+Ручная настройка параметров:
+
+```bash
+python experiments/run_demo.py --scenario overload --count 150 --bandwidth 1600 --loss 0.02 --seed 42
 ```
 
 Параметры:
 
+- `--scenario` — профиль канала: `normal`, `overload`, `emergency`;
 - `--count` — число входных сообщений;
 - `--bandwidth` — доступная полоса канала в байтах за цикл;
 - `--loss` — вероятность случайной потери пакета от `0.0` до `1.0`;
-- `--seed` — фиксирует случайность для воспроизводимого эксперимента.
+- `--seed` — фиксирует случайность для воспроизводимого эксперимента;
+- `--export-dir` — папка для JSON/CSV отчёта.
 
 ## Запуск тестов
 
@@ -91,6 +117,9 @@ compression / telemetry packing
         |
         +--> adaptive pipeline:
              deduplication -> telemetry aggregation -> priority scheduling -> channel
+        |
+        v
+metrics + JSON/CSV report
 ```
 
 ## Метрики
@@ -107,7 +136,20 @@ compression / telemetry packing
 - коэффициент сжатия;
 - загрузку канала;
 - число сообщений, отброшенных из-за нехватки полосы;
-- число случайно потерянных сообщений.
+- число случайно потерянных сообщений;
+- прирост относительно baseline.
+
+## Как показывать проект
+
+См. `DEMO_GUIDE.md`.
+
+Минимальная последовательность для демонстрации:
+
+```bash
+python -m pytest
+python experiments/run_demo.py --scenario overload
+python experiments/run_demo.py --scenario emergency --export-dir reports
+```
 
 ## Ограничения
 
@@ -127,7 +169,6 @@ compression / telemetry packing
 
 - добавить графики сравнения baseline/adaptive;
 - сделать простой web- или PyQt-интерфейс;
-- добавить профили канала: нормальный, перегруженный, аварийный;
-- добавить экспорт отчёта в CSV/JSON;
-- добавить сценарии для конкурсной демонстрации;
+- добавить экспорт презентационного PDF/HTML-отчёта;
+- добавить обучение весов приоритета на синтетических сценариях;
 - оформить презентацию проекта.
