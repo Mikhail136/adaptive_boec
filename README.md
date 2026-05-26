@@ -37,7 +37,7 @@
 - `core/deduplication.py` — дедупликация и агрегация телеметрии.
 - `core/scheduler.py` — приоритетный планировщик.
 - `core/metrics.py` — метрики доставки, критических сообщений и сжатия.
-- `core/reporting.py` — экспорт отчётов в JSON и CSV.
+- `core/reporting.py` — экспорт отчётов в JSON, CSV и HTML.
 - `channel/emulator.py` — эмулятор ограниченного канала с отчётом о потерях.
 - `adapters/mixed_stream_generator.py` — генератор смешанного потока.
 - `adapters/telemetry_adapter.py` — бинарная упаковка координат и телеметрии.
@@ -71,7 +71,10 @@ python experiments/run_demo.py --scenario emergency --export-dir reports
 ```text
 reports/emergency_report.json
 reports/emergency_report.csv
+reports/emergency_report.html
 ```
+
+HTML-файл можно открыть в браузере и использовать как наглядный отчёт для показа.
 
 Ручная настройка параметров:
 
@@ -86,7 +89,7 @@ python experiments/run_demo.py --scenario overload --count 150 --bandwidth 1600 
 - `--bandwidth` — доступная полоса канала в байтах за цикл;
 - `--loss` — вероятность случайной потери пакета от `0.0` до `1.0`;
 - `--seed` — фиксирует случайность для воспроизводимого эксперимента;
-- `--export-dir` — папка для JSON/CSV отчёта.
+- `--export-dir` — папка для JSON/CSV/HTML отчёта.
 
 ## Запуск тестов
 
@@ -119,7 +122,7 @@ compression / telemetry packing
              deduplication -> telemetry aggregation -> priority scheduling -> channel
         |
         v
-metrics + JSON/CSV report
+metrics + JSON/CSV/HTML report
 ```
 
 ## Метрики
@@ -151,6 +154,12 @@ python experiments/run_demo.py --scenario overload
 python experiments/run_demo.py --scenario emergency --export-dir reports
 ```
 
+После последней команды откройте:
+
+```text
+reports/emergency_report.html
+```
+
 ## Ограничения
 
 Это демонстрационная инженерная модель. В текущем виде она не учитывает:
@@ -167,8 +176,7 @@ python experiments/run_demo.py --scenario emergency --export-dir reports
 
 ## Следующие шаги
 
-- добавить графики сравнения baseline/adaptive;
 - сделать простой web- или PyQt-интерфейс;
-- добавить экспорт презентационного PDF/HTML-отчёта;
+- добавить экспорт презентационного PDF-отчёта;
 - добавить обучение весов приоритета на синтетических сценариях;
 - оформить презентацию проекта.
