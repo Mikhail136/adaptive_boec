@@ -6,8 +6,10 @@ from core.deduplication import DeduplicationController, TelemetryAggregator
 from core.importance import ImportanceScorer
 from core.metrics import calculate_metrics
 from core.packet import CombatPacket, PacketType
+from core.pipeline import run_experiment
 from core.reporting import render_html_report
 from core.scheduler import PriorityScheduler
+from web_demo import render_index
 
 
 def test_importance_orders_critical_packets_highest():
@@ -110,6 +112,15 @@ def test_end_to_end_metrics_are_stable():
     assert metrics["raw_size"] > 0
 
 
+def test_pipeline_runs_small_experiment():
+    result = run_experiment(scenario_name="normal", count=10, bandwidth=500, loss=0.0, seed=42)
+
+    assert result.scenario_name == "normal"
+    assert result.parameters["count"] == 10
+    assert result.report["baseline"]["total_packets"] == 10
+    assert result.report["adaptive"]["total_packets"] == 10
+
+
 def test_html_report_contains_key_sections():
     report = {
         "scenario": "test",
@@ -160,3 +171,11 @@ def test_html_report_contains_key_sections():
     assert "Критических доставлено" in html
     assert "Baseline" in html
     assert "Adaptive" in html
+
+
+def test_web_index_contains_demo_form():
+    html = render_index()
+
+    assert "Адаптив-Боец" in html
+    assert "Параметры эксперимента" in html
+    assert "Запустить демонстрацию" in html
