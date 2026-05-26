@@ -27,3 +27,9 @@ jobs:
 
       - name: Run demo smoke test
         run: python experiments/run_demo.py --scenario overload --export-dir reports
+
+      - name: Check generated reports
+        run: |
+          test -f reports/overload_report.json
+          test -f reports/overload_report.csv
+          test -f reports/overload_report.html
