@@ -6,6 +6,7 @@ from core.deduplication import DeduplicationController, TelemetryAggregator
 from core.importance import ImportanceScorer
 from core.metrics import calculate_metrics
 from core.packet import CombatPacket, PacketType
+from core.reporting import render_html_report
 from core.scheduler import PriorityScheduler
 
 
@@ -107,3 +108,55 @@ def test_end_to_end_metrics_are_stable():
     assert metrics["total_packets"] == 20
     assert metrics["delivered_packets"] == 10
     assert metrics["raw_size"] > 0
+
+
+def test_html_report_contains_key_sections():
+    report = {
+        "scenario": "test",
+        "parameters": {"count": 10, "bandwidth": 1000, "loss": 0.0, "seed": 42},
+        "baseline": {
+            "total_packets": 10,
+            "delivered_packets": 4,
+            "delivery_rate": 0.4,
+            "total_critical": 2,
+            "delivered_critical": 1,
+            "critical_delivery_rate": 0.5,
+            "raw_size": 1000,
+            "sent_size": 500,
+            "compression_ratio": 2.0,
+            "used_bandwidth": 500,
+            "bandwidth_bytes": 1000,
+            "channel_utilization": 0.5,
+            "dropped_by_bandwidth": 5,
+            "dropped_by_loss": 1,
+        },
+        "adaptive": {
+            "total_packets": 10,
+            "delivered_packets": 6,
+            "delivery_rate": 0.6,
+            "total_critical": 2,
+            "delivered_critical": 2,
+            "critical_delivery_rate": 1.0,
+            "raw_size": 1000,
+            "sent_size": 450,
+            "compression_ratio": 2.2,
+            "used_bandwidth": 450,
+            "bandwidth_bytes": 1000,
+            "channel_utilization": 0.45,
+            "dropped_by_bandwidth": 3,
+            "dropped_by_loss": 1,
+        },
+        "delta": {
+            "delivery_rate_gain": 0.2,
+            "critical_delivery_rate_gain": 0.5,
+            "sent_size_reduction_bytes": 50,
+            "sent_size_reduction_ratio": 0.1,
+        },
+    }
+
+    html = render_html_report(report)
+
+    assert "Адаптив-Боец" in html
+    assert "Критических доставлено" in html
+    assert "Baseline" in html
+    assert "Adaptive" in html
