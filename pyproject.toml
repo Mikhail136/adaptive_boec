@@ -1,0 +1,9 @@
+[project]
+name = "adaptive-boec"
+version = "0.1.0"
+description = "Demonstration MVP for adaptive prioritization and compression of information streams"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

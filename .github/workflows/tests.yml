@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Run demo smoke test
+        run: python experiments/run_demo.py --scenario overload --export-dir reports
+
+      - name: Check generated reports
+        run: |
+          test -f reports/overload_report.json
+          test -f reports/overload_report.csv
+          test -f reports/overload_report.html
