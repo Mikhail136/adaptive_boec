@@ -35,6 +35,7 @@
 - `core/importance.py` — оценка важности сообщений.
 - `core/compression.py` — zlib-сжатие полезной нагрузки.
 - `core/deduplication.py` — дедупликация и агрегация телеметрии.
+- `core/pipeline.py` — общий экспериментальный pipeline для CLI и web demo.
 - `core/scheduler.py` — приоритетный планировщик.
 - `core/metrics.py` — метрики доставки, критических сообщений и сжатия.
 - `core/reporting.py` — экспорт отчётов в JSON, CSV и HTML.
@@ -42,11 +43,12 @@
 - `adapters/mixed_stream_generator.py` — генератор смешанного потока.
 - `adapters/telemetry_adapter.py` — бинарная упаковка координат и телеметрии.
 - `experiments/run_demo.py` — основной демонстрационный сценарий.
+- `web_demo.py` — локальный web-интерфейс без внешних зависимостей.
 - `tests/test_core_pipeline.py` — базовые автотесты MVP.
 - `.github/workflows/tests.yml` — CI-проверка через GitHub Actions.
 - `DEMO_GUIDE.md` — сценарий показа проекта.
 
-## Быстрый запуск
+## Быстрый запуск CLI
 
 ```bash
 python experiments/run_demo.py
@@ -76,7 +78,23 @@ reports/emergency_report.html
 
 HTML-файл можно открыть в браузере и использовать как наглядный отчёт для показа.
 
-Ручная настройка параметров:
+## Запуск web demo
+
+```bash
+python web_demo.py
+```
+
+После запуска откроется локальная страница:
+
+```text
+http://127.0.0.1:8000
+```
+
+На странице можно выбрать сценарий `normal`, `overload` или `emergency`, задать
+параметры канала и нажать кнопку запуска. Расчёт выполняется локально на вашем
+компьютере, данные никуда не отправляются.
+
+## Ручная настройка параметров CLI
 
 ```bash
 python experiments/run_demo.py --scenario overload --count 150 --bandwidth 1600 --loss 0.02 --seed 42
@@ -123,6 +141,9 @@ compression / telemetry packing
         |
         v
 metrics + JSON/CSV/HTML report
+        |
+        +--> CLI demo
+        +--> local web demo
 ```
 
 ## Метрики
@@ -150,11 +171,11 @@ metrics + JSON/CSV/HTML report
 
 ```bash
 python -m pytest
-python experiments/run_demo.py --scenario overload
 python experiments/run_demo.py --scenario emergency --export-dir reports
+python web_demo.py
 ```
 
-После последней команды откройте:
+После команды с `--export-dir` можно открыть:
 
 ```text
 reports/emergency_report.html
@@ -176,7 +197,6 @@ reports/emergency_report.html
 
 ## Следующие шаги
 
-- сделать простой web- или PyQt-интерфейс;
 - добавить экспорт презентационного PDF-отчёта;
 - добавить обучение весов приоритета на синтетических сценариях;
 - оформить презентацию проекта.
